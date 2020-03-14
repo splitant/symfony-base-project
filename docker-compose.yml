@@ -10,9 +10,11 @@ services:
       MYSQL_DATABASE: $DB_NAME
       MYSQL_USER: $DB_USER
       MYSQL_PASSWORD: $DB_PASSWORD
-#    volumes:
-#      - ./mariadb-init:/docker-entrypoint-initdb.d # Place init .sql file(s) here.
+    volumes:
+      - ./mariadb-init:/docker-entrypoint-initdb.d # Place init .sql file(s) here.
 #      - /path/to/mariadb/data/on/host:/var/lib/mysql # I want to manage volumes manually.
+    ports:
+      - 3370:3036
 
 #  postgres:
 #    image: wodby/postgres:$POSTGRES_TAG
@@ -35,22 +37,30 @@ services:
       DB_USER: $DB_USER
       DB_PASSWORD: $DB_PASSWORD
       DB_NAME: $DB_NAME
+      DB_ROOT_PASSWORD: $DB_ROOT_PASSWORD
+      DB_DRIVER: $DB_DRIVER
+      PHP_TAG: $PHP_TAG
+      SYMFONY_VER: $SYMFONY_VER
       PHP_FPM_USER: wodby
       PHP_FPM_GROUP: wodby
-## Read instructions at https://wodby.com/docs/stacks/php/local/#xdebug
-#      PHP_XDEBUG: 1
-#      PHP_XDEBUG_DEFAULT_ENABLE: 1
-#      PHP_XDEBUG_REMOTE_CONNECT_BACK: 0
-#      PHP_IDE_CONFIG: serverName=my-ide
-#      PHP_XDEBUG_IDEKEY: "my-ide"
-#      PHP_XDEBUG_REMOTE_HOST: 172.17.0.1 # Linux
-#      PHP_XDEBUG_REMOTE_HOST: 10.254.254.254 # macOS
-#      PHP_XDEBUG_REMOTE_HOST: 10.0.75.1 # Windows
+      HTTP_PROXY: $HTTP_PROXY
+      http_proxy: $HTTP_PROXY
+      HTTPS_PROXY: $HTTP_PROXY
+      https_proxy: $HTTP_PROXY
+      HTTP_PROXY_REQUEST_FULLURI: $HTTPS_PROXY_REQUEST_FULLURI
+      HTTPS_PROXY_REQUEST_FULLURI: $HTTPS_PROXY_REQUEST_FULLURI
+      #PHP_XDEBUG: 1
+      #PHP_XDEBUG_DEFAULT_ENABLE: 1
+      #PHP_XDEBUG_REMOTE_CONNECT_BACK: 0
+      #PHP_IDE_CONFIG: serverName=docker
+      #PHP_XDEBUG_REMOTE_HOST: 172.17.0.1 # Linux
+      #PHP_XDEBUG_REMOTE_LOG: /tmp/php-xdebug.log
+      #COMPOSER_ALLOW_XDEBUG: 1
+      #COMPOSER_DISABLE_XDEBUG_WARN: 1
     volumes:
-      - ./:/var/www/html
-## For macOS users (https://wodby.com/docs/stacks/php/local#docker-for-mac)
-#      - ./:/var/www/html:cached # User-guided caching
-#      - docker-sync:/var/www/html # Docker-sync
+      - ./web:/var/www/html
+      - ./scripts/profile.d/setup_project.sh:/etc/profile.d/setup_project.sh
+      - ./scripts/profile.d/aliases.sh:/etc/profile.d/aliases.sh
 ## For XHProf and Xdebug profiler traces
 #      - files:/mnt/files
 
@@ -66,12 +76,14 @@ services:
       NGINX_VHOST_PRESET: php
       NGINX_SERVER_ROOT: /var/www/html/public
     volumes:
-      - ./:/var/www/html
+      - ./web:/var/www/html
 # Options for macOS users (https://wodby.com/docs/stacks/php/local#docker-for-mac)
 #      - ./:/var/www/html:cached # User-guided caching
 #      - docker-sync:/var/www/html # Docker-sync
     labels:
       - "traefik.http.routers.${PROJECT_NAME}_nginx.rule=Host(`${PROJECT_BASE_URL}`)"
+    ports:
+      - 8087:80
 
 #  apache:
 #    image: wodby/apache:$APACHE_TAG
@@ -127,17 +139,17 @@ services:
 #    labels:
 #      - "traefik.http.routers.${PROJECT_NAME}_adminer.rule=Host(`adminer.${PROJECT_BASE_URL}`)"
 
-#  pma:
-#    image: phpmyadmin/phpmyadmin
-#    container_name: "${PROJECT_NAME}_pma"
-#    environment:
-#      PMA_HOST: $DB_HOST
-#      PMA_USER: $DB_USER
-#      PMA_PASSWORD: $DB_PASSWORD
-#      PHP_UPLOAD_MAX_FILESIZE: 1G
-#      PHP_MAX_INPUT_VARS: 1G
-#    labels:
-#      - "traefik.http.routers.${PROJECT_NAME}_pma.rule=Host(`pma.${PROJECT_BASE_URL}`)"
+  pma:
+    image: phpmyadmin/phpmyadmin
+    container_name: "${PROJECT_NAME}_pma"
+    environment:
+      PMA_HOST: $DB_HOST
+    ports:
+      - "8091:80"
+    volumes:
+      - /sessions
+    links:
+      - mariadb
 
 #  solr:
 #    image: wodby/solr:$SOLR_TAG
