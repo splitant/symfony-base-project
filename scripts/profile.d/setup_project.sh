@@ -20,6 +20,8 @@ EOF
 
    wget https://get.symfony.com/cli/installer -O - | bash
 
+   sudo mv $HOME/.symfony/bin/symfony /usr/local/bin/symfony
+
    if [ "${SYMFONY_VER}" != "latest" ]; then
    	symfony new ${PROJECT_NAME} --full --version=${SYMFONY_VER}
    else
