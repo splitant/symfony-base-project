@@ -18,55 +18,14 @@ setup_project () {
       exit
 EOF
 
-   drupal_projects=(
-      webform
-      admin_toolbar
-      google_analytics
-      config_split
-      devel
-      ds
-      fontawesome
-      linkit
-      field_group
-      paragraphs
-      inline_entity_form
-      fontawesome_menu_icons
-      search_api
-      search_api_solr
-      facets
-      metatag
-      pathauto
-      token
-      redirect
-      robotstxt
-      simple_sitemap
-      sharethis
-      recaptcha
-      better_exposed_filters
-      views_infinite_scroll
-      emulsify
-      bootstrap
-      adminimal_theme
-   )
+   wget https://get.symfony.com/cli/installer -O - | bash
 
-   if [ "${DRUPAL_VER}" != "latest" ]; then
-      composer -n create-project drupal/recommended-project:${DRUPAL_VER} --no-install ./
-      composer require drupal/core-recommended:${DRUPAL_VER} drupal/core-dev:${DRUPAL_VER} --update-with-dependencies
+   if [ "${SYMFONY_VER}" != "latest" ]; then
+   	symfony new ${PROJECT_NAME} --full --version=${SYMFONY_VER}
    else
-      composer create-project drupal/recommended-project ./ 
+   	symfony new ${PROJECT_NAME} --full
    fi
-
-   composer install --prefer-dist
-
-   for project in "${drupal_projects[@]}"; do
-      composer require drupal/$project
-   done
-
-   composer require drush/drush
 
    git config --global user.name "splitant"
    git config --global user.email "axel.depret.pro@gmail.com"
-
-   drush si standard --db-url=${DB_DRIVER}://root:${DB_ROOT_PASSWORD}@${DB_HOST}/${DB_NAME} -y 
-   drush upwd admin admin
 }
